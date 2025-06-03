@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sports Practice Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Sports Practice Manager</h1>
+        <nav>
+            <button id="show-checkin">Check-in</button>
+            <button id="show-assignments">Assignments</button>
+            <button id="show-management">Manage Rosters</button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="checkin-section" class="app-section active">
+            <h2>Check-in for Practice</h2>
+            <div class="checkin-lists">
+                <div class="checkin-athletes">
+                    <h3>Athletes</h3>
+                    <ul id="athlete-checkin-list">
+                        </ul>
+                </div>
+                <div class="checkin-volunteers">
+                    <h3>Volunteers & Coaches</h3>
+                    <ul id="volunteer-checkin-list">
+                        </ul>
+                </div>
+            </div>
+            <button id="finalize-checkin">Finalize Check-in</button>
+        </section>
+
+        <section id="assignments-section" class="app-section">
+            <h2>Assign Volunteers</h2>
+            <div class="assignment-controls">
+                <select id="athlete-select">
+                    <option value="">Select Athlete</option>
+                    </select>
+                <div class="assigned-volunteers-display">
+                    <h3>Currently Assigned:</h3>
+                    <ul id="current-assignments">
+                        </ul>
+                </div>
+            </div>
+            <div class="volunteer-assignment-list">
+                <h3>Available Volunteers:</h3>
+                <ul id="available-volunteer-list">
+                    </ul>
+            </div>
+            <div class="athlete-details">
+                <h3>Athlete Notes:</h3>
+                <p id="athlete-notes-display">No notes for this athlete.</p>
+                <h3>Past Volunteers:</h3>
+                <ul id="past-volunteer-display">
+                    </ul>
+            </div>
+        </section>
+
+        <section id="management-section" class="app-section">
+            <h2>Manage Rosters</h2>
+            <div class="add-new">
+                <h3>Add New Athlete</h3>
+                <input type="text" id="new-athlete-name" placeholder="Athlete Name">
+                <textarea id="new-athlete-notes" placeholder="Notes (e.g., special needs, requires multiple volunteers)"></textarea>
+                <button id="add-athlete-btn">Add Athlete</button>
+            </div>
+            <div class="add-new">
+                <h3>Add New Volunteer/Coach</h3>
+                <input type="text" id="new-volunteer-name" placeholder="Volunteer/Coach Name">
+                <button id="add-volunteer-btn">Add Volunteer</button>
+            </div>
+
+            <div class="current-rosters">
+                <div class="roster-list">
+                    <h3>Current Athletes</h3>
+                    <ul id="athlete-roster-list">
+                        </ul>
+                </div>
+                <div class="roster-list">
+                    <h3>Current Volunteers & Coaches</h3>
+                    <ul id="volunteer-roster-list">
+                        </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

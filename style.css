@@ -1,0 +1,395 @@
+/* Basic Reset & Body Styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure body takes full viewport height */
+}
+
+/* Header Styling */
+header {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8em;
+}
+
+nav {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap; /* Allow buttons to wrap on smaller screens */
+    gap: 10px;
+}
+
+nav button {
+    background-color: #5cb85c;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+}
+
+nav button:hover {
+    background-color: #4cae4c;
+}
+
+/* Main Content Area */
+main {
+    flex-grow: 1; /* Allow main to take up available space */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between sections */
+    max-width: 900px; /* Limit content width for readability */
+    margin: 20px auto; /* Center the main content */
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Section Styling */
+.app-section {
+    display: none; /* Hidden by default, JavaScript will show/hide */
+    padding: 20px 0;
+    border-top: 1px solid #eee;
+}
+
+.app-section.active {
+    display: block; /* Show active section */
+}
+
+.app-section h2 {
+    color: #4CAF50;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* Check-in Section Specifics */
+.checkin-lists {
+    display: flex;
+    flex-direction: column; /* Stack on small screens */
+    gap: 20px;
+}
+
+@media (min-width: 600px) { /* Side-by-side on larger screens */
+    .checkin-lists {
+        flex-direction: row;
+        justify-content: space-around;
+    }
+}
+
+.checkin-athletes, .checkin-volunteers {
+    flex: 1;
+    background-color: #e8f5e9; /* Light green background */
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.checkin-lists h3 {
+    text-align: center;
+    margin-top: 0;
+    color: #388e3c;
+}
+
+#athlete-checkin-list,
+#volunteer-checkin-list {
+    list-style: none;
+    padding: 0;
+}
+
+#athlete-checkin-list li,
+#volunteer-checkin-list li {
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#athlete-checkin-list li.checked-in,
+#volunteer-checkin-list li.checked-in {
+    background-color: #c8e6c9; /* Lighter green when checked in */
+    border-color: #81c784;
+}
+
+#finalize-checkin {
+    display: block;
+    width: 80%;
+    margin: 20px auto 0;
+    padding: 15px;
+    background-color: #007bff; /* Blue for primary action */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+#finalize-checkin:hover {
+    background-color: #0056b3;
+}
+
+/* Assignments Section Specifics */
+.assignment-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+#athlete-select {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    width: 100%;
+    max-width: 300px;
+    font-size: 1em;
+}
+
+.assigned-volunteers-display {
+    width: 100%;
+    max-width: 400px;
+    background-color: #e3f2fd; /* Light blue */
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.assigned-volunteers-display h3 {
+    margin-top: 0;
+    color: #2196f3;
+}
+
+#current-assignments {
+    list-style: none;
+    padding: 0;
+    min-height: 40px; /* Ensure some height even when empty */
+}
+
+#current-assignments li {
+    background-color: white;
+    border: 1px solid #b3e5fc;
+    padding: 8px 12px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.volunteer-assignment-list {
+    background-color: #ffe0b2; /* Light orange */
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.volunteer-assignment-list h3 {
+    text-align: center;
+    margin-top: 0;
+    color: #fb8c00;
+}
+
+#available-volunteer-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Responsive grid */
+    gap: 10px;
+}
+
+#available-volunteer-list li {
+    background-color: white;
+    border: 1px solid #ffcc80;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    cursor: grab; /* Indicate draggable */
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+#available-volunteer-list li.assigned {
+    background-color: #a5d6a7; /* Green for assigned volunteers */
+    border-color: #66bb6a;
+    cursor: default;
+}
+
+#available-volunteer-list li:active {
+    transform: scale(0.98);
+}
+
+.athlete-details {
+    background-color: #fce4ec; /* Light pink */
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.athlete-details h3 {
+    color: #e91e63;
+    margin-top: 0;
+}
+
+#athlete-notes-display, #past-volunteer-display {
+    background-color: white;
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #f8bbd0;
+    min-height: 30px;
+    margin-top: 10px;
+}
+
+#past-volunteer-display {
+    list-style: none;
+    padding: 0;
+}
+
+#past-volunteer-display li {
+    font-size: 0.9em;
+    color: #555;
+    margin-bottom: 3px;
+}
+
+/* Roster Management Section Specifics */
+.add-new {
+    background-color: #e0f7fa; /* Light cyan */
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.add-new h3 {
+    color: #00bcd4;
+    margin-top: 0;
+}
+
+.add-new input[type="text"],
+.add-new textarea {
+    width: calc(100% - 20px); /* Account for padding */
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #b2ebf2;
+    border-radius: 5px;
+    font-size: 1em;
+}
+
+.add-new button {
+    background-color: #00796b; /* Dark cyan */
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+}
+
+.add-new button:hover {
+    background-color: #004d40;
+}
+
+.current-rosters {
+    display: flex;
+    flex-direction: column; /* Stack on small screens */
+    gap: 20px;
+}
+
+@media (min-width: 600px) {
+    .current-rosters {
+        flex-direction: row;
+        justify-content: space-around;
+    }
+}
+
+.roster-list {
+    flex: 1;
+    background-color: #eceff1; /* Light gray */
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.roster-list h3 {
+    text-align: center;
+    margin-top: 0;
+    color: #455a64;
+}
+
+#athlete-roster-list,
+#volunteer-roster-list {
+    list-style: none;
+    padding: 0;
+}
+
+#athlete-roster-list li,
+#volunteer-roster-list li {
+    background-color: white;
+    border: 1px solid #cfd8dc;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95em;
+}
+
+/* General button styling for interactive elements */
+button {
+    font-weight: bold;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    header h1 {
+        font-size: 1.6em;
+    }
+    nav button {
+        font-size: 0.9em;
+        padding: 8px 12px;
+    }
+    main {
+        padding: 10px;
+        margin: 10px auto;
+    }
+    .app-section {
+        padding: 15px 0;
+    }
+    .add-new input[type="text"],
+    .add-new textarea,
+    #athlete-select {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    header h1 {
+        font-size: 1.4em;
+    }
+    nav button {
+        width: 100%; /* Stack buttons on very small screens */
+    }
+    .checkin-lists, .current-rosters {
+        flex-direction: column;
+    }
+}
