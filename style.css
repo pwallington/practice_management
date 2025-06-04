@@ -310,7 +310,7 @@ main {
     padding: 20px;
 }
 
-#available-volunteer-list.drop-target-unassign {
+.volunteers-column.drop-target-unassign {
     background-color: #ffebee !important; /* Light pink/red */
     /* Using outline to avoid affecting layout, !important to ensure override */
     outline: 2px dashed #c62828 !important; /* Darker red dashed outline */
