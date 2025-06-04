@@ -211,17 +211,31 @@ main {
     margin-top: 8px; /* Space above the list of volunteers */
 }
 
+/* New Common Class for Volunteer Items */
+.volunteer-item-card {
+    background-color: #fff; /* Base background */
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 12px; /* Adjusted padding */
+    margin-bottom: 8px; /* Default margin */
+    display: flex; /* Default to flex for alignment, can be overridden */
+    align-items: center; /* Default alignment */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    font-size: 0.9em; /* Consistent font size */
+    /* transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; */ /* Common transitions */
+}
+
 .athlete-card .assigned-volunteer-list-for-athlete li {
-    font-size: 0.85em;
-    background-color: #e7f3ff; /* Light blue for assigned volunteer items */
-    border: 1px solid #cce0ff;
-    padding: 5px 8px;
-    border-radius: 4px;
-    margin-bottom: 4px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    /* Inherits from .volunteer-item-card */
+    /* Specific overrides or additions for assigned volunteers */
+    background-color: #e7f3ff; /* Specific: Light blue for assigned volunteer items */
+    border-color: #cce0ff;     /* Specific: Border for assigned */
+    /* padding: 5px 8px; /* Overridden by .volunteer-item-card unless made more specific */
+    /* margin-bottom: 4px; /* Overridden by .volunteer-item-card unless made more specific */
+    /* font-size: 0.85em; /* Overridden by .volunteer-item-card unless made more specific */
+    justify-content: space-between; /* Keeps X button to the right */
     cursor: grab; /* Indicate these items are draggable */
+    /* display: flex; and align-items: center; are inherited */
 }
 
 .unassign-volunteer-btn {
@@ -256,32 +270,37 @@ main {
     gap: 10px;
 }
 
+#available-volunteer-list {
+    /* ... existing grid styles ... */
+    gap: 8px; /* Adjusted gap to complement margin-bottom of cards */
+}
+
 #available-volunteer-list li {
-    background-color: white;
-    border: 1px solid #ffcc80; /* Light orange border, from previous .volunteer-assignment-list context */
-    padding: 12px 10px; /* Increased padding */
-    border-radius: 5px;
-    text-align: center;
+    /* Inherits from .volunteer-item-card */
+    /* Specific overrides or additions for available volunteers */
+    justify-content: center; /* Center content as these don't have an X button */
+    text-align: center; /* Ensure text is centered */
     cursor: grab; /* Indicate draggable */
-    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease; /* Keep transitions */
 }
 
 #available-volunteer-list li:hover {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    border-color: #fb8c00; /* Darker orange on hover */
+    /* .volunteer-item-card already has a base shadow, this can enhance it or change border */
+    border-color: #fb8c00; /* Darker orange on hover - specific to available list */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.15); /* Slightly more pronounced shadow on hover */
 }
 
 #available-volunteer-list li:active { /* When actively dragging or clicking */
-    transform: scale(0.98);
-    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    transform: scale(0.97); /* Slightly more noticeable pop */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+/* Ensure .assigned-elsewhere modifies the .volunteer-item-card properties */
 #available-volunteer-list li.assigned-elsewhere {
-    background-color: #e0e0e0; /* Grey out if assigned */
-    border-color: #c0c0c0;
-    color: #777;
-    cursor: not-allowed; /* Change cursor as it cannot be assigned again (or to indicate it's already placed) */
+    background-color: #e0e0e0 !important; /* Grey out if assigned - use !important if needed due to specificity */
+    border-color: #c0c0c0 !important;
+    color: #777 !important;
+    cursor: not-allowed !important;
 }
 
 .empty-state-message {
@@ -289,6 +308,33 @@ main {
     color: #777;
     font-style: italic;
     padding: 20px;
+}
+
+#unassign-drop-zone {
+    border: 2px dashed #ccc;
+    background-color: #f8f8f8;
+    padding: 20px;
+    margin-top: 20px; /* Adjust as needed for layout */
+    text-align: center;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    /* For flex layout, if it's a third column or needs to span: */
+    /* flex-basis: 100%; /* Example if it should span full width below columns */
+}
+
+#unassign-drop-zone h3 {
+    margin-top: 0;
+    color: #555;
+}
+
+#unassign-drop-zone p {
+    color: #777;
+    font-size: 0.9em;
+}
+
+#unassign-drop-zone.drag-over {
+    background-color: #ffebee; /* Light pink/red background */
+    border-color: #e57373; /* Reddish border */
 }
 
 

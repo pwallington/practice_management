@@ -164,35 +164,32 @@ document.addEventListener('DOMContentLoaded', () => {
                     const assignedDiv = document.createElement('div');
                     assignedDiv.classList.add('assigned-volunteers-to-athlete');
 
-                    const assignedP = document.createElement('p');
-                    const volunteerNamesSpan = document.createElement('span');
-                    volunteerNamesSpan.className = 'volunteer-names';
-                    assignedP.textContent = 'Assigned: ';
-                    assignedP.appendChild(volunteerNamesSpan);
-                    assignedDiv.appendChild(assignedP);
+                    // const assignedP = document.createElement('p'); // REMOVED
+                    // const volunteerNamesSpan = document.createElement('span'); // REMOVED
+                    // volunteerNamesSpan.className = 'volunteer-names'; // REMOVED
+                    // assignedP.textContent = 'Assigned: '; // REMOVED
+                    // assignedP.appendChild(volunteerNamesSpan); // REMOVED
+                    // assignedDiv.appendChild(assignedP); // REMOVED
 
                     const assignedUl = document.createElement('ul');
                     assignedUl.classList.add('assigned-volunteer-list-for-athlete');
                     assignedDiv.appendChild(assignedUl);
                     athleteCard.appendChild(assignedDiv);
 
-                    // Populate assigned volunteers and setup unassign buttons
+                    // Populate assigned volunteers (list items) and setup unassign buttons
                     const assignedVolunteers = appData.assignments[athlete.id] || [];
                     assignedUl.innerHTML = ''; // Clear previous list items
 
-                    if (assignedVolunteers.length === 0) {
-                        volunteerNamesSpan.textContent = 'None';
-                    } else {
-                        const assignedVolunteerNames = assignedVolunteers.map(volId => {
-                            const vol = appData.volunteers.find(v => v.id === volId);
-                            return vol ? vol.name : 'Unknown Volunteer';
-                        });
-                        volunteerNamesSpan.textContent = assignedVolunteerNames.join(', ');
+                    // Logic for volunteerNamesSpan.textContent = 'None' or joined names is REMOVED.
+                    // The assignedUl will simply be empty if assignedVolunteers.length === 0,
+                    // or it will be populated with LIs below.
 
+                    if (assignedVolunteers.length > 0) { // Only loop if there are volunteers
                         assignedVolunteers.forEach(volId => {
                             const volunteer = appData.volunteers.find(v => v.id === volId);
                             if (volunteer) {
                                 const li = document.createElement('li');
+                                li.classList.add('volunteer-item-card'); // Add common class
                                 li.textContent = volunteer.name; // Volunteer name
 
                                 // Make it draggable for reassignment
@@ -248,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const volunteer = appData.volunteers.find(v => v.id === volunteerId);
                 if (volunteer) {
                     const li = document.createElement('li');
+                    li.classList.add('volunteer-item-card'); // Add common class
                     li.dataset.id = volunteer.id;
                     li.textContent = volunteer.name;
                     li.draggable = true; // Make volunteer draggable
@@ -560,4 +558,45 @@ function toggleAssignment(athleteId, volunteerId) {
     loadData();
     renderCheckinLists(); // Start on the check-in screen
     showSection(checkinSection);
+
+    // --- Unassign Drop Zone Logic ---
+    const unassignDropZone = document.getElementById('unassign-drop-zone');
+
+    if (unassignDropZone) {
+        unassignDropZone.addEventListener('dragover', (event) => {
+            event.preventDefault(); // Necessary to allow dropping
+            // Only add drag-over class if an item potentially from an athlete is being dragged
+            const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId');
+            // Check if dataTransfer contains sourceAthleteId. The actual value doesn't matter here, just its presence.
+            // A simple way: if dataTransfer.types includes a custom type set on dragstart from athlete card items.
+            // For this implementation, sourceAthleteId will be an empty string if dragged from available list.
+            // So, if sourceAthleteId is not empty, it's from an athlete card.
+            if (sourceAthleteId) { // Check if it's potentially a volunteer from an athlete
+                 unassignDropZone.classList.add('drag-over');
+                 event.dataTransfer.dropEffect = 'move';
+            } else {
+                // If not from an athlete card, indicate it's not a valid drop target for unassignment
+                event.dataTransfer.dropEffect = 'none';
+            }
+        });
+
+        unassignDropZone.addEventListener('dragleave', () => {
+            unassignDropZone.classList.remove('drag-over');
+        });
+
+        unassignDropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            unassignDropZone.classList.remove('drag-over');
+
+            const volunteerId = event.dataTransfer.getData('text/plain');
+            const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId'); // Will be empty string if not set
+
+            if (sourceAthleteId && volunteerId) { // Ensure volunteerId is also present
+                // console.log(`Unassign Drop: Volunteer ${volunteerId} from Athlete ${sourceAthleteId}`);
+                unassignVolunteerFromAthlete(sourceAthleteId, volunteerId); // This function handles saveData and re-rendering
+            } else {
+                // console.log('Item dropped on unassign zone was not a volunteer from an athlete card or volunteerId was missing.');
+            }
+        });
+    }
 });
