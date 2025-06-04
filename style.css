@@ -150,125 +150,146 @@ main {
 }
 
 /* Assignments Section Specifics */
-.assignment-controls {
+.assignments-layout {
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
-    align-items: center;
+    flex-direction: column; /* Stack on small screens by default */
+    gap: 20px;
 }
 
-#athlete-select {
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #ddd;
-    width: 100%;
-    max-width: 300px;
-    font-size: 1em;
+@media (min-width: 768px) {
+    .assignments-layout {
+        flex-direction: row; /* Side-by-side on larger screens */
+    }
 }
 
-.assigned-volunteers-display {
-    width: 100%;
-    max-width: 400px;
-    background-color: #e3f2fd; /* Light blue */
+.athletes-column, .volunteers-column {
+    flex: 1; /* Allow them to share space */
     padding: 15px;
+    background-color: #f9f9f9; /* Light background for columns */
     border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.athletes-column h3, .volunteers-column h3 {
     text-align: center;
-}
-
-.assigned-volunteers-display h3 {
+    color: #4CAF50; /* Consistent with header */
     margin-top: 0;
-    color: #2196f3;
+    margin-bottom: 15px;
 }
 
-#current-assignments {
-    list-style: none;
-    padding: 0;
-    min-height: 40px; /* Ensure some height even when empty */
+/* Athlete Card Styling */
+.athlete-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-#current-assignments li {
-    background-color: white;
-    border: 1px solid #b3e5fc;
-    padding: 8px 12px;
+.athlete-card h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333; /* Darker text for name */
+}
+
+.athlete-card .assigned-volunteers-to-athlete p,
+.athlete-card .athlete-specific-notes p {
+    font-size: 0.9em;
     margin-bottom: 5px;
+    color: #555;
+}
+.athlete-card .assigned-volunteers-to-athlete p .volunteer-names {
+    font-weight: bold;
+    color: #007bff;
+}
+
+
+.athlete-card .assigned-volunteer-list-for-athlete {
+    list-style: none;
+    padding-left: 0;
+    margin-top: 8px; /* Space above the list of volunteers */
+}
+
+.athlete-card .assigned-volunteer-list-for-athlete li {
+    font-size: 0.85em;
+    background-color: #e7f3ff; /* Light blue for assigned volunteer items */
+    border: 1px solid #cce0ff;
+    padding: 5px 8px;
     border-radius: 4px;
+    margin-bottom: 4px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.volunteer-assignment-list {
-    background-color: #ffe0b2; /* Light orange */
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 20px;
+.unassign-volunteer-btn {
+    background-color: #ffdddd; /* Light red */
+    color: #c00; /* Dark red text */
+    border: none;
+    border-radius: 3px;
+    padding: 3px 6px; /* Slightly more padding */
+    font-size: 0.9em;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: background-color 0.2s ease;
 }
 
-.volunteer-assignment-list h3 {
-    text-align: center;
-    margin-top: 0;
-    color: #fb8c00;
+.unassign-volunteer-btn:hover {
+    background-color: #ffcccc;
 }
 
+/* Drag-and-Drop Visual Cues */
+.athlete-card.drag-over {
+    border-color: #4CAF50; /* Green border to indicate valid drop target */
+    background-color: #e8f5e9; /* Light green background */
+}
+
+
+/* Available Volunteer List Styling */
 #available-volunteer-list {
     list-style: none;
     padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); /* Responsive grid */
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* Responsive grid, slightly wider items */
     gap: 10px;
 }
 
 #available-volunteer-list li {
     background-color: white;
-    border: 1px solid #ffcc80;
-    padding: 10px;
+    border: 1px solid #ffcc80; /* Light orange border, from previous .volunteer-assignment-list context */
+    padding: 12px 10px; /* Increased padding */
     border-radius: 5px;
     text-align: center;
     cursor: grab; /* Indicate draggable */
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
-#available-volunteer-list li.assigned {
-    background-color: #a5d6a7; /* Green for assigned volunteers */
-    border-color: #66bb6a;
-    cursor: default;
+#available-volunteer-list li:hover {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-color: #fb8c00; /* Darker orange on hover */
 }
 
-#available-volunteer-list li:active {
+#available-volunteer-list li:active { /* When actively dragging or clicking */
     transform: scale(0.98);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
 }
 
-.athlete-details {
-    background-color: #fce4ec; /* Light pink */
-    padding: 15px;
-    border-radius: 8px;
+#available-volunteer-list li.assigned-elsewhere {
+    background-color: #e0e0e0; /* Grey out if assigned */
+    border-color: #c0c0c0;
+    color: #777;
+    cursor: not-allowed; /* Change cursor as it cannot be assigned again (or to indicate it's already placed) */
 }
 
-.athlete-details h3 {
-    color: #e91e63;
-    margin-top: 0;
+.empty-state-message {
+    text-align: center;
+    color: #777;
+    font-style: italic;
+    padding: 20px;
 }
 
-#athlete-notes-display, #past-volunteer-display {
-    background-color: white;
-    padding: 10px;
-    border-radius: 5px;
-    border: 1px solid #f8bbd0;
-    min-height: 30px;
-    margin-top: 10px;
-}
-
-#past-volunteer-display {
-    list-style: none;
-    padding: 0;
-}
-
-#past-volunteer-display li {
-    font-size: 0.9em;
-    color: #555;
-    margin-bottom: 3px;
-}
 
 /* Roster Management Section Specifics */
 .add-new {

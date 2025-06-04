@@ -36,28 +36,32 @@
 
         <section id="assignments-section" class="app-section">
             <h2>Assign Volunteers</h2>
-            <div class="assignment-controls">
-                <select id="athlete-select">
-                    <option value="">Select Athlete</option>
-                    </select>
-                <div class="assigned-volunteers-display">
-                    <h3>Currently Assigned:</h3>
-                    <ul id="current-assignments">
-                        </ul>
+            <div class="assignments-layout">
+                <div id="checked-in-athletes-container" class="athletes-column">
+                    <h3>Checked-in Athletes</h3>
+                    <!-- Athlete items will be dynamically added here by script.js -->
+                    <!-- Example athlete item structure:
+                    <div class="athlete-card" data-id="athlete_id_1">
+                        <h4>Athlete Name</h4>
+                        <div class="assigned-volunteers-to-athlete">
+                            <p>Assigned: <span class="volunteer-names">None</span></p>
+                            <ul class="assigned-volunteer-list-for-athlete"></ul>
+                        </div>
+                        <div class="athlete-specific-notes">
+                             <p>Notes: <span class="notes-text">Athlete notes here...</span></p>
+                        </div>
+                    </div>
+                    -->
+                </div>
+                <div class="volunteers-column">
+                    <h3>Available Volunteers</h3>
+                    <ul id="available-volunteer-list">
+                        <!-- Volunteer items will be dynamically added here by script.js -->
+                    </ul>
                 </div>
             </div>
-            <div class="volunteer-assignment-list">
-                <h3>Available Volunteers:</h3>
-                <ul id="available-volunteer-list">
-                    </ul>
-            </div>
-            <div class="athlete-details">
-                <h3>Athlete Notes:</h3>
-                <p id="athlete-notes-display">No notes for this athlete.</p>
-                <h3>Past Volunteers:</h3>
-                <ul id="past-volunteer-display">
-                    </ul>
-            </div>
+            <!-- Athlete details like past volunteers could be integrated into athlete cards or a separate modal if needed -->
+            <!-- For now, removing the old athlete-details section to simplify, will rely on info in athlete cards -->
         </section>
 
         <section id="management-section" class="app-section">
