@@ -137,9 +137,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     athleteCard.addEventListener('drop', (event) => {
                         event.preventDefault();
                         athleteCard.classList.remove('drag-over');
+
                         const volunteerId = event.dataTransfer.getData('text/plain');
-                        const athleteId = athleteCard.dataset.id; // or event.currentTarget.dataset.id
-                        assignVolunteerToAthlete(athleteId, volunteerId);
+                        const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId'); // Get source athlete
+                        const targetAthleteId = event.currentTarget.dataset.id; // Athlete card where dropped
+
+                        if (sourceAthleteId) { // If volunteer was dragged from another athlete
+                            if (sourceAthleteId !== targetAthleteId) {
+                                // console.log(`Reassigning ${volunteerId} from ${sourceAthleteId} to ${targetAthleteId}`);
+                                unassignVolunteerFromAthlete(sourceAthleteId, volunteerId, false); // Suppress re-render
+                                assignVolunteerToAthlete(targetAthleteId, volunteerId, false);   // Suppress re-render
+                                renderAssignmentsSection(); // Re-render once after both operations
+                            } else {
+                                // Volunteer dropped on the same athlete card it came from - do nothing.
+                                // console.log("Volunteer dropped on the same athlete.");
+                            }
+                        } else { // Volunteer was dragged from the "Available Volunteers" list
+                            assignVolunteerToAthlete(targetAthleteId, volunteerId);
+                        }
                     });
 
                     const nameHeader = document.createElement('h4');
@@ -178,16 +193,35 @@ document.addEventListener('DOMContentLoaded', () => {
                             const volunteer = appData.volunteers.find(v => v.id === volId);
                             if (volunteer) {
                                 const li = document.createElement('li');
-                                li.textContent = volunteer.name + ' '; // Add space for button
+                                li.textContent = volunteer.name; // Volunteer name
+
+                                // Make it draggable for reassignment
+                                li.draggable = true;
+                                li.addEventListener('dragstart', (event) => {
+                                    event.stopPropagation(); // Prevent athlete card drag interference
+                                    event.dataTransfer.setData('text/plain', volunteer.id); // volunteer being dragged
+                                    event.dataTransfer.setData('sourceAthleteId', athlete.id); // athlete they are coming from
+                                    event.dataTransfer.effectAllowed = 'move';
+                                    event.target.classList.add('dragging');
+                                });
+                                li.addEventListener('dragend', (event) => {
+                                    event.stopPropagation();
+                                    event.target.classList.remove('dragging');
+                                });
+
+                                // Existing remove button logic
                                 const removeBtn = document.createElement('button');
                                 removeBtn.textContent = 'X';
                                 removeBtn.className = 'unassign-volunteer-btn';
                                 removeBtn.dataset.athleteId = athlete.id;
                                 removeBtn.dataset.volunteerId = volId;
                                 removeBtn.addEventListener('click', () => {
-                                    // console.log('Attempting to unassign:', athlete.id, volId);
                                     unassignVolunteerFromAthlete(athlete.id, volId);
                                 });
+
+                                // Add a spacer or style for button positioning if needed, then append button
+                                const spacer = document.createTextNode(' '); // Simple space
+                                li.appendChild(spacer);
                                 li.appendChild(removeBtn);
                                 assignedUl.appendChild(li);
                             }
@@ -251,8 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    function unassignVolunteerFromAthlete(athleteId, volunteerId) {
-        // console.log('Unassigning:', volunteerId, 'from athlete:', athleteId);
+    function unassignVolunteerFromAthlete(athleteId, volunteerId, shouldRender = true) {
+        // console.log('Unassigning:', volunteerId, 'from athlete:', athleteId, 'Render:', shouldRender);
         if (appData.assignments[athleteId]) {
             const index = appData.assignments[athleteId].indexOf(volunteerId);
             if (index > -1) {
@@ -264,11 +298,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         saveData();
-        renderAssignmentsSection(); // Re-render the UI
+        if (shouldRender) {
+            renderAssignmentsSection(); // Re-render the UI
+        }
     }
 
 
-    function assignVolunteerToAthlete(athleteId, volunteerId) {
+    function assignVolunteerToAthlete(athleteId, volunteerId, shouldRender = true) {
+        // console.log('Assigning:', volunteerId, 'to athlete:', athleteId, 'Render:', shouldRender);
         // Ensure assignments array exists for the athlete
         appData.assignments[athleteId] = appData.assignments[athleteId] || [];
 
@@ -284,7 +321,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveData();
-        renderAssignmentsSection(); // Re-render the UI to reflect the new assignment
+        if (shouldRender) {
+            renderAssignmentsSection(); // Re-render the UI to reflect the new assignment
+        }
     }
 
 
