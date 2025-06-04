@@ -494,37 +494,6 @@ function toggleAssignment(athleteId, volunteerId) {
         showSection(assignmentsSection); // Automatically move to assignments
     }
 
-
-    function toggleAssignment(athleteId, volunteerId) {
-        if (!athleteId) {
-            alert('Please select an athlete first.');
-            return;
-        }
-
-        appData.assignments[athleteId] = appData.assignments[athleteId] || [];
-        const currentAssignments = appData.assignments[athleteId];
-
-        const index = currentAssignments.indexOf(volunteerId);
-        if (index > -1) {
-            // Remove assignment
-            currentAssignments.splice(index, 1);
-        } else {
-            // Add assignment
-            currentAssignments.push(volunteerId);
-        }
-
-        // Update volunteer history for the athlete
-        appData.volunteerHistory[athleteId] = appData.volunteerHistory[athleteId] || [];
-        if (!appData.volunteerHistory[athleteId].includes(volunteerId)) {
-            appData.volunteerHistory[athleteId].push(volunteerId);
-        }
-
-        saveData();
-        // updateAssignmentsDisplay(athleteId); // This was part of the old logic
-        renderAssignmentsSection(); // Re-render the overall assignment section
-    }
-*/
-
     // --- Event Listeners ---
     showCheckinBtn.addEventListener('click', () => {
         showSection(checkinSection);
