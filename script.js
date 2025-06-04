@@ -138,6 +138,12 @@ document.addEventListener('DOMContentLoaded', () => {
         section.classList.add('active');
     }
 
+    function clearAllHighlights() {
+        document.querySelectorAll('#athlete-roster-list li, #volunteer-roster-list li').forEach(item => {
+            item.classList.remove('editing-item');
+        });
+    }
+
     function resetAthleteForm() {
         newAthleteNameInput.value = '';
         newAthleteNotesInput.value = '';
@@ -146,6 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         appData.editingItemId = null;
         appData.editingItemType = null;
         document.querySelectorAll('#athlete-role-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        clearAllHighlights();
     }
 
     function resetVolunteerForm() {
@@ -158,6 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
             appData.editingItemType = null;
         }
         document.querySelectorAll('#volunteer-role-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        clearAllHighlights();
     }
 
     // --- Render Functions ---
@@ -546,6 +554,8 @@ function toggleAssignment(athleteId, volunteerId) {
             li.textContent = athleteDisplayText;
             li.dataset.id = athlete.id; // Ensure ID is set for editing
             li.addEventListener('click', () => {
+                clearAllHighlights();
+                li.classList.add('editing-item');
                 resetVolunteerForm(); // Reset other form
                 appData.editingItemId = athlete.id;
                 appData.editingItemType = 'athlete';
@@ -577,6 +587,8 @@ function toggleAssignment(athleteId, volunteerId) {
             li.textContent = volunteerDisplayText;
             li.dataset.id = volunteer.id; // Ensure ID is set for editing
             li.addEventListener('click', () => {
+                clearAllHighlights();
+                li.classList.add('editing-item');
                 resetAthleteForm(); // Reset other form
                 appData.editingItemId = volunteer.id;
                 appData.editingItemType = 'volunteer';
