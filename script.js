@@ -42,11 +42,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalizeCheckinBtn = document.getElementById('finalize-checkin');
 
     // Assignment elements
-    const athleteSelect = document.getElementById('athlete-select');
-    const currentAssignmentsList = document.getElementById('current-assignments');
+    const checkedInAthletesContainer = document.getElementById('checked-in-athletes-container'); // New
     const availableVolunteerList = document.getElementById('available-volunteer-list');
-    const athleteNotesDisplay = document.getElementById('athlete-notes-display');
-    const pastVolunteerDisplay = document.getElementById('past-volunteer-display');
+    // const athleteSelect = document.getElementById('athlete-select'); // Removed
+    // const currentAssignmentsList = document.getElementById('current-assignments'); // Removed
+    // const athleteNotesDisplay = document.getElementById('athlete-notes-display'); // Removed
+    // const pastVolunteerDisplay = document.getElementById('past-volunteer-display'); // Removed
 
     // Management elements
     const newAthleteNameInput = document.getElementById('new-athlete-name');
@@ -108,49 +109,221 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderAssignmentsSection() {
-        // Populate athlete select dropdown
-        athleteSelect.innerHTML = '<option value="">Select Athlete</option>';
-        appData.checkedInAthletes.forEach(athleteId => {
-            const athlete = appData.athletes.find(a => a.id === athleteId);
-            if (athlete) {
-                const option = document.createElement('option');
-                option.value = athlete.id;
-                option.textContent = athlete.name;
-                athleteSelect.appendChild(option);
-            }
-        });
-
-        // Clear previous assignments and available volunteers
-        currentAssignmentsList.innerHTML = '';
+        // Clear existing content
+        checkedInAthletesContainer.innerHTML = '';
         availableVolunteerList.innerHTML = '';
-        athleteNotesDisplay.textContent = 'No notes for this athlete.';
-        pastVolunteerDisplay.innerHTML = '';
 
-        // Render available volunteers (all checked-in volunteers initially)
-        appData.checkedInVolunteers.forEach(volunteerId => {
-            const volunteer = appData.volunteers.find(v => v.id === volunteerId);
-            if (volunteer) {
-                const li = document.createElement('li');
-                li.dataset.id = volunteer.id;
-                li.textContent = volunteer.name;
-                li.addEventListener('click', () => {
-                    if (athleteSelect.value) {
-                        toggleAssignment(athleteSelect.value, volunteer.id);
+        // Render Checked-in Athletes or empty state message
+        if (appData.checkedInAthletes.length === 0) {
+            checkedInAthletesContainer.innerHTML = '<p class="empty-state-message">No athletes are currently checked in.</p>';
+        } else {
+            appData.checkedInAthletes.forEach(athleteId => {
+                const athlete = appData.athletes.find(a => a.id === athleteId);
+                if (athlete) {
+                    const athleteCard = document.createElement('div');
+                    athleteCard.classList.add('athlete-card');
+                    athleteCard.dataset.id = athlete.id;
+
+                    // Make athlete card a drop target
+                    athleteCard.addEventListener('dragover', (event) => {
+                        event.preventDefault(); // Allow drop
+                        athleteCard.classList.add('drag-over');
+                    });
+
+                    athleteCard.addEventListener('dragleave', () => {
+                        athleteCard.classList.remove('drag-over');
+                    });
+
+                    athleteCard.addEventListener('drop', (event) => {
+                        event.preventDefault();
+                        athleteCard.classList.remove('drag-over');
+                        const volunteerId = event.dataTransfer.getData('text/plain');
+                        const athleteId = athleteCard.dataset.id; // or event.currentTarget.dataset.id
+                        assignVolunteerToAthlete(athleteId, volunteerId);
+                    });
+
+                    const nameHeader = document.createElement('h4');
+                    nameHeader.textContent = athlete.name;
+                    athleteCard.appendChild(nameHeader);
+
+                    const assignedDiv = document.createElement('div');
+                    assignedDiv.classList.add('assigned-volunteers-to-athlete');
+
+                    const assignedP = document.createElement('p');
+                    const volunteerNamesSpan = document.createElement('span');
+                    volunteerNamesSpan.className = 'volunteer-names';
+                    assignedP.textContent = 'Assigned: ';
+                    assignedP.appendChild(volunteerNamesSpan);
+                    assignedDiv.appendChild(assignedP);
+
+                    const assignedUl = document.createElement('ul');
+                    assignedUl.classList.add('assigned-volunteer-list-for-athlete');
+                    assignedDiv.appendChild(assignedUl);
+                    athleteCard.appendChild(assignedDiv);
+
+                    // Populate assigned volunteers and setup unassign buttons
+                    const assignedVolunteers = appData.assignments[athlete.id] || [];
+                    assignedUl.innerHTML = ''; // Clear previous list items
+
+                    if (assignedVolunteers.length === 0) {
+                        volunteerNamesSpan.textContent = 'None';
                     } else {
-                        alert('Please select an athlete first!');
-                    }
-                });
-                availableVolunteerList.appendChild(li);
-            }
-        });
+                        const assignedVolunteerNames = assignedVolunteers.map(volId => {
+                            const vol = appData.volunteers.find(v => v.id === volId);
+                            return vol ? vol.name : 'Unknown Volunteer';
+                        });
+                        volunteerNamesSpan.textContent = assignedVolunteerNames.join(', ');
 
-        // Trigger update if an athlete is already selected
-        if (athleteSelect.value) {
-            updateAssignmentsDisplay(athleteSelect.value);
+                        assignedVolunteers.forEach(volId => {
+                            const volunteer = appData.volunteers.find(v => v.id === volId);
+                            if (volunteer) {
+                                const li = document.createElement('li');
+                                li.textContent = volunteer.name + ' '; // Add space for button
+                                const removeBtn = document.createElement('button');
+                                removeBtn.textContent = 'X';
+                                removeBtn.className = 'unassign-volunteer-btn';
+                                removeBtn.dataset.athleteId = athlete.id;
+                                removeBtn.dataset.volunteerId = volId;
+                                removeBtn.addEventListener('click', () => {
+                                    // console.log('Attempting to unassign:', athlete.id, volId);
+                                    unassignVolunteerFromAthlete(athlete.id, volId);
+                                });
+                                li.appendChild(removeBtn);
+                                assignedUl.appendChild(li);
+                            }
+                        });
+                    }
+
+                    const notesDiv = document.createElement('div');
+                    notesDiv.classList.add('athlete-specific-notes');
+                    const notesP = document.createElement('p');
+                    notesP.innerHTML = `Notes: <span class="notes-text">${appData.athleteNotes[athlete.id] || 'No notes.'}</span>`;
+                    notesDiv.appendChild(notesP);
+                    athleteCard.appendChild(notesDiv);
+
+                    checkedInAthletesContainer.appendChild(athleteCard);
+                }
+            });
         }
+
+        // Render Available Volunteers or empty state message
+        if (appData.checkedInVolunteers.length === 0) {
+            availableVolunteerList.innerHTML = '<p class="empty-state-message">No volunteers are currently checked in or available.</p>';
+        } else {
+            appData.checkedInVolunteers.forEach(volunteerId => {
+                const volunteer = appData.volunteers.find(v => v.id === volunteerId);
+                if (volunteer) {
+                    const li = document.createElement('li');
+                    li.dataset.id = volunteer.id;
+                    li.textContent = volunteer.name;
+                    li.draggable = true; // Make volunteer draggable
+
+                    li.addEventListener('dragstart', (event) => {
+                        event.dataTransfer.setData('text/plain', volunteer.id);
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.target.classList.add('dragging'); // Add class when drag starts
+                    });
+
+                    li.addEventListener('dragend', (event) => {
+                        event.target.classList.remove('dragging'); // Remove class when drag ends
+                    });
+
+                    // Visually distinguish if volunteer is assigned elsewhere
+                    let isAssigned = false;
+                    for (const athleteIdInAssignments in appData.assignments) {
+                        if (appData.assignments[athleteIdInAssignments].includes(volunteer.id)) {
+                            isAssigned = true;
+                            break;
+                        }
+                    }
+                    if (isAssigned) {
+                        li.classList.add('assigned-elsewhere');
+                    } else {
+                        li.classList.remove('assigned-elsewhere');
+                    }
+
+                    availableVolunteerList.appendChild(li);
+                }
+            });
+        }
+
+        // REMOVED: Call to updateAssignmentsDisplay as its functionality will be integrated differently
     }
 
+
+    function unassignVolunteerFromAthlete(athleteId, volunteerId) {
+        // console.log('Unassigning:', volunteerId, 'from athlete:', athleteId);
+        if (appData.assignments[athleteId]) {
+            const index = appData.assignments[athleteId].indexOf(volunteerId);
+            if (index > -1) {
+                appData.assignments[athleteId].splice(index, 1);
+            }
+            // Clean up empty assignment arrays for the athlete
+            if (appData.assignments[athleteId].length === 0) {
+                delete appData.assignments[athleteId];
+            }
+        }
+        saveData();
+        renderAssignmentsSection(); // Re-render the UI
+    }
+
+
+    function assignVolunteerToAthlete(athleteId, volunteerId) {
+        // Ensure assignments array exists for the athlete
+        appData.assignments[athleteId] = appData.assignments[athleteId] || [];
+
+        // Add volunteer to assignments if not already assigned
+        if (!appData.assignments[athleteId].includes(volunteerId)) {
+            appData.assignments[athleteId].push(volunteerId);
+        }
+
+        // Update volunteer history for the athlete
+        appData.volunteerHistory[athleteId] = appData.volunteerHistory[athleteId] || [];
+        if (!appData.volunteerHistory[athleteId].includes(volunteerId)) {
+            appData.volunteerHistory[athleteId].push(volunteerId);
+        }
+
+        saveData();
+        renderAssignmentsSection(); // Re-render the UI to reflect the new assignment
+    }
+
+
+/* // Old toggleAssignment function - no longer used by primary assignment UI
+function toggleAssignment(athleteId, volunteerId) {
+    if (!athleteId) {
+        alert('Please select an athlete first.');
+        return;
+    }
+
+    appData.assignments[athleteId] = appData.assignments[athleteId] || [];
+    const currentAssignments = appData.assignments[athleteId];
+
+    const index = currentAssignments.indexOf(volunteerId);
+    if (index > -1) {
+        // Remove assignment
+        currentAssignments.splice(index, 1);
+    } else {
+        // Add assignment
+        currentAssignments.push(volunteerId);
+    }
+
+    // Update volunteer history for the athlete
+    appData.volunteerHistory[athleteId] = appData.volunteerHistory[athleteId] || [];
+    if (!appData.volunteerHistory[athleteId].includes(volunteerId)) {
+        appData.volunteerHistory[athleteId].push(volunteerId);
+    }
+
+    saveData();
+    updateAssignmentsDisplay(athleteId); // Re-render assignments for the selected athlete
+    renderAssignmentsSection(); // Re-render the overall assignment section to update available volunteers
+}
+*/
+
     function updateAssignmentsDisplay(athleteId) {
+        // This function's logic will be refactored.
+        // For now, it's emptied or commented out to prevent errors with removed DOM elements.
+        // console.log(`updateAssignmentsDisplay called for athlete: ${athleteId}, but is currently disabled.`);
+        /*
         currentAssignmentsList.innerHTML = '';
         pastVolunteerDisplay.innerHTML = '';
 
@@ -222,6 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (uniquePastVolunteers.length === 0 || pastVolunteerDisplay.innerHTML === '') {
             pastVolunteerDisplay.innerHTML = '<li>No past volunteers recorded.</li>';
         }
+        */
     }
 
 
@@ -346,10 +520,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveData();
-        updateAssignmentsDisplay(athleteId); // Re-render assignments for the selected athlete
-        renderAssignmentsSection(); // Re-render the overall assignment section to update available volunteers
+        // updateAssignmentsDisplay(athleteId); // This was part of the old logic
+        renderAssignmentsSection(); // Re-render the overall assignment section
     }
-
+*/
 
     // --- Event Listeners ---
     showCheckinBtn.addEventListener('click', () => {
@@ -370,9 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     finalizeCheckinBtn.addEventListener('click', finalizeCheckin);
 
-    athleteSelect.addEventListener('change', (event) => {
-        updateAssignmentsDisplay(event.target.value);
-    });
+    // REMOVED: athleteSelect.addEventListener('change', (event) => {
+    //     updateAssignmentsDisplay(event.target.value);
+    // });
 
     // --- Initial Load ---
     loadData();
