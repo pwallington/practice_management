@@ -201,6 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                     event.dataTransfer.effectAllowed = 'move';
                                     event.target.classList.add('dragging');
                                     document.body.classList.add('unassign-drag-active'); // Add body class
+                                    // REMOVED: console.log('dragstart from athlete card - volunteerId:', volunteer.id, 'set sourceAthleteId:', athlete.id);
                                 });
                                 li.addEventListener('dragend', (event) => {
                                     event.stopPropagation();
@@ -565,34 +566,42 @@ function toggleAssignment(athleteId, volunteerId) {
     if (availableVolunteerList) { // Ensure the element exists
         availableVolunteerList.addEventListener('dragover', (event) => {
             event.preventDefault(); // Allow dropping
-            const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId');
-            if (sourceAthleteId) { // Volunteer dragged from an athlete card
+            // Check the types of data being dragged. Browsers often lowercase custom types.
+            if (event.dataTransfer.types.includes('sourceathleteid')) {
                 availableVolunteerList.classList.add('drop-target-unassign');
                 event.dataTransfer.dropEffect = 'move';
-            } else { // Volunteer dragged from available list itself or other source
-                // availableVolunteerList.classList.remove('drop-target-unassign'); // Not strictly needed here, dropEffect = 'none' handles it
-                event.dataTransfer.dropEffect = 'none'; // Prevent dropping on itself if not from an athlete
+            } else {
+                availableVolunteerList.classList.remove('drop-target-unassign');
+                event.dataTransfer.dropEffect = 'none';
             }
+            // REMOVED: console.log('dragover availableVolunteerList ...');
         });
 
         availableVolunteerList.addEventListener('dragleave', (event) => {
             // Simple removal on dragleave. More complex logic could check event.relatedTarget
-            // if (!availableVolunteerList.contains(event.relatedTarget)) { // Example of more robust check
-                 availableVolunteerList.classList.remove('drop-target-unassign');
-            // }
+            availableVolunteerList.classList.remove('drop-target-unassign');
         });
 
         availableVolunteerList.addEventListener('drop', (event) => {
-            event.preventDefault();
+            event.preventDefault(); // Crucial: ensure this is called first
+            // REMOVED: console.log('--- Drop on availableVolunteerList ---');
             availableVolunteerList.classList.remove('drop-target-unassign');
+
             const volunteerId = event.dataTransfer.getData('text/plain');
             const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId');
 
+            // REMOVED: console.log('  Retrieved volunteerId:', volunteerId);
+            // REMOVED: console.log('  Retrieved sourceAthleteId:', sourceAthleteId);
+
             if (sourceAthleteId && volunteerId) { // Volunteer was dragged from an athlete card
-                // console.log(`Unassigning ${volunteerId} from ${sourceAthleteId} by dropping on available list.`);
-                unassignVolunteerFromAthlete(sourceAthleteId, volunteerId); // This function handles saveData and re-rendering
+                // REMOVED: console.log('  Condition (sourceAthleteId && volunteerId) MET.');
+                // REMOVED: console.log('  Calling unassignVolunteerFromAthlete for athlete:', sourceAthleteId, 'and volunteer:', volunteerId);
+                unassignVolunteerFromAthlete(sourceAthleteId, volunteerId);
+            } else {
+                // REMOVED: console.log('  Condition (sourceAthleteId && volunteerId) NOT MET.');
+                // If no sourceAthleteId, it was dragged from the available list itself, so do nothing.
             }
-            // If no sourceAthleteId, it was dragged from the available list itself, so do nothing.
+            // REMOVED: console.log('--- End Drop on availableVolunteerList ---');
         });
     }
 });
