@@ -71,11 +71,21 @@
                 <input type="text" id="new-athlete-name" placeholder="Athlete Name">
                 <textarea id="new-athlete-notes" placeholder="Notes (e.g., special needs, requires multiple volunteers)"></textarea>
                 <button id="add-athlete-btn">Add Athlete</button>
+                <button id="cancel-athlete-edit-btn" style="display:none;">Cancel Edit</button>
+                <h4>Athlete Roles</h4>
+                <input type="text" id="new-athlete-role-name" placeholder="New Athlete Role">
+                <button id="add-athlete-role-btn">Add Role</button>
+                <div id="athlete-role-checkboxes" class="role-checkboxes"></div>
             </div>
             <div class="add-new">
                 <h3>Add New Volunteer/Coach</h3>
                 <input type="text" id="new-volunteer-name" placeholder="Volunteer/Coach Name">
                 <button id="add-volunteer-btn">Add Volunteer</button>
+                <button id="cancel-volunteer-edit-btn" style="display:none;">Cancel Edit</button>
+                <h4>Volunteer Roles</h4>
+                <input type="text" id="new-volunteer-role-name" placeholder="New Volunteer Role">
+                <button id="add-volunteer-role-btn">Add Role</button>
+                <div id="volunteer-role-checkboxes" class="role-checkboxes"></div>
             </div>
 
             <div class="current-rosters">
@@ -89,6 +99,18 @@
                     <ul id="volunteer-roster-list">
                         </ul>
                 </div>
+            </div>
+
+            <div class="manage-all-roles">
+                <h3>Manage All Roles/Labels</h3>
+                <h4>Athlete Roles</h4>
+                <ul id="manage-athlete-roles-list">
+                    <!-- Athlete roles will be listed here by JS -->
+                </ul>
+                <h4>Volunteer Roles</h4>
+                <ul id="manage-volunteer-roles-list">
+                    <!-- Volunteer roles will be listed here by JS -->
+                </ul>
             </div>
         </section>
     </main>
