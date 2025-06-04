@@ -200,10 +200,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                     event.dataTransfer.setData('sourceAthleteId', athlete.id); // athlete they are coming from
                                     event.dataTransfer.effectAllowed = 'move';
                                     event.target.classList.add('dragging');
+                                    document.body.classList.add('unassign-drag-active'); // Add body class
                                 });
                                 li.addEventListener('dragend', (event) => {
                                     event.stopPropagation();
                                     event.target.classList.remove('dragging');
+                                    document.body.classList.remove('unassign-drag-active'); // Remove body class
                                 });
 
                                 // Existing remove button logic
@@ -559,44 +561,38 @@ function toggleAssignment(athleteId, volunteerId) {
     renderCheckinLists(); // Start on the check-in screen
     showSection(checkinSection);
 
-    // --- Unassign Drop Zone Logic ---
-    const unassignDropZone = document.getElementById('unassign-drop-zone');
-
-    if (unassignDropZone) {
-        unassignDropZone.addEventListener('dragover', (event) => {
-            event.preventDefault(); // Necessary to allow dropping
-            // Only add drag-over class if an item potentially from an athlete is being dragged
+    // --- Event Listeners for Drag-to-Unassign on Available Volunteers List ---
+    if (availableVolunteerList) { // Ensure the element exists
+        availableVolunteerList.addEventListener('dragover', (event) => {
+            event.preventDefault(); // Allow dropping
             const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId');
-            // Check if dataTransfer contains sourceAthleteId. The actual value doesn't matter here, just its presence.
-            // A simple way: if dataTransfer.types includes a custom type set on dragstart from athlete card items.
-            // For this implementation, sourceAthleteId will be an empty string if dragged from available list.
-            // So, if sourceAthleteId is not empty, it's from an athlete card.
-            if (sourceAthleteId) { // Check if it's potentially a volunteer from an athlete
-                 unassignDropZone.classList.add('drag-over');
-                 event.dataTransfer.dropEffect = 'move';
-            } else {
-                // If not from an athlete card, indicate it's not a valid drop target for unassignment
-                event.dataTransfer.dropEffect = 'none';
+            if (sourceAthleteId) { // Volunteer dragged from an athlete card
+                availableVolunteerList.classList.add('drop-target-unassign');
+                event.dataTransfer.dropEffect = 'move';
+            } else { // Volunteer dragged from available list itself or other source
+                // availableVolunteerList.classList.remove('drop-target-unassign'); // Not strictly needed here, dropEffect = 'none' handles it
+                event.dataTransfer.dropEffect = 'none'; // Prevent dropping on itself if not from an athlete
             }
         });
 
-        unassignDropZone.addEventListener('dragleave', () => {
-            unassignDropZone.classList.remove('drag-over');
+        availableVolunteerList.addEventListener('dragleave', (event) => {
+            // Simple removal on dragleave. More complex logic could check event.relatedTarget
+            // if (!availableVolunteerList.contains(event.relatedTarget)) { // Example of more robust check
+                 availableVolunteerList.classList.remove('drop-target-unassign');
+            // }
         });
 
-        unassignDropZone.addEventListener('drop', (event) => {
+        availableVolunteerList.addEventListener('drop', (event) => {
             event.preventDefault();
-            unassignDropZone.classList.remove('drag-over');
-
+            availableVolunteerList.classList.remove('drop-target-unassign');
             const volunteerId = event.dataTransfer.getData('text/plain');
-            const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId'); // Will be empty string if not set
+            const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId');
 
-            if (sourceAthleteId && volunteerId) { // Ensure volunteerId is also present
-                // console.log(`Unassign Drop: Volunteer ${volunteerId} from Athlete ${sourceAthleteId}`);
+            if (sourceAthleteId && volunteerId) { // Volunteer was dragged from an athlete card
+                // console.log(`Unassigning ${volunteerId} from ${sourceAthleteId} by dropping on available list.`);
                 unassignVolunteerFromAthlete(sourceAthleteId, volunteerId); // This function handles saveData and re-rendering
-            } else {
-                // console.log('Item dropped on unassign zone was not a volunteer from an athlete card or volunteerId was missing.');
             }
+            // If no sourceAthleteId, it was dragged from the available list itself, so do nothing.
         });
     }
 });
