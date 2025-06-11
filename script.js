@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // const currentAssignmentsList = document.getElementById('current-assignments'); // Removed
     // const athleteNotesDisplay = document.getElementById('athlete-notes-display'); // Removed
     // const pastVolunteerDisplay = document.getElementById('past-volunteer-display'); // Removed
+    const volunteersColumn = document.querySelector('.volunteers-column'); // Added for new drop target
 
     // Management elements
     const newAthleteNameInput = document.getElementById('new-athlete-name');
@@ -137,9 +138,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     athleteCard.addEventListener('drop', (event) => {
                         event.preventDefault();
                         athleteCard.classList.remove('drag-over');
+
                         const volunteerId = event.dataTransfer.getData('text/plain');
-                        const athleteId = athleteCard.dataset.id; // or event.currentTarget.dataset.id
-                        assignVolunteerToAthlete(athleteId, volunteerId);
+                        const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId'); // Get source athlete
+                        const targetAthleteId = event.currentTarget.dataset.id; // Athlete card where dropped
+
+                        if (sourceAthleteId) { // If volunteer was dragged from another athlete
+                            if (sourceAthleteId !== targetAthleteId) {
+                                // console.log(`Reassigning ${volunteerId} from ${sourceAthleteId} to ${targetAthleteId}`);
+                                unassignVolunteerFromAthlete(sourceAthleteId, volunteerId, false); // Suppress re-render
+                                assignVolunteerToAthlete(targetAthleteId, volunteerId, false);   // Suppress re-render
+                                renderAssignmentsSection(); // Re-render once after both operations
+                            } else {
+                                // Volunteer dropped on the same athlete card it came from - do nothing.
+                                // console.log("Volunteer dropped on the same athlete.");
+                            }
+                        } else { // Volunteer was dragged from the "Available Volunteers" list
+                            assignVolunteerToAthlete(targetAthleteId, volunteerId);
+                        }
                     });
 
                     const nameHeader = document.createElement('h4');
@@ -149,45 +165,64 @@ document.addEventListener('DOMContentLoaded', () => {
                     const assignedDiv = document.createElement('div');
                     assignedDiv.classList.add('assigned-volunteers-to-athlete');
 
-                    const assignedP = document.createElement('p');
-                    const volunteerNamesSpan = document.createElement('span');
-                    volunteerNamesSpan.className = 'volunteer-names';
-                    assignedP.textContent = 'Assigned: ';
-                    assignedP.appendChild(volunteerNamesSpan);
-                    assignedDiv.appendChild(assignedP);
+                    // const assignedP = document.createElement('p'); // REMOVED
+                    // const volunteerNamesSpan = document.createElement('span'); // REMOVED
+                    // volunteerNamesSpan.className = 'volunteer-names'; // REMOVED
+                    // assignedP.textContent = 'Assigned: '; // REMOVED
+                    // assignedP.appendChild(volunteerNamesSpan); // REMOVED
+                    // assignedDiv.appendChild(assignedP); // REMOVED
 
                     const assignedUl = document.createElement('ul');
                     assignedUl.classList.add('assigned-volunteer-list-for-athlete');
                     assignedDiv.appendChild(assignedUl);
                     athleteCard.appendChild(assignedDiv);
 
-                    // Populate assigned volunteers and setup unassign buttons
+                    // Populate assigned volunteers (list items) and setup unassign buttons
                     const assignedVolunteers = appData.assignments[athlete.id] || [];
                     assignedUl.innerHTML = ''; // Clear previous list items
 
-                    if (assignedVolunteers.length === 0) {
-                        volunteerNamesSpan.textContent = 'None';
-                    } else {
-                        const assignedVolunteerNames = assignedVolunteers.map(volId => {
-                            const vol = appData.volunteers.find(v => v.id === volId);
-                            return vol ? vol.name : 'Unknown Volunteer';
-                        });
-                        volunteerNamesSpan.textContent = assignedVolunteerNames.join(', ');
+                    // Logic for volunteerNamesSpan.textContent = 'None' or joined names is REMOVED.
+                    // The assignedUl will simply be empty if assignedVolunteers.length === 0,
+                    // or it will be populated with LIs below.
 
+                    if (assignedVolunteers.length > 0) { // Only loop if there are volunteers
                         assignedVolunteers.forEach(volId => {
                             const volunteer = appData.volunteers.find(v => v.id === volId);
                             if (volunteer) {
                                 const li = document.createElement('li');
-                                li.textContent = volunteer.name + ' '; // Add space for button
+                                li.classList.add('volunteer-item-card'); // Add common class
+                                li.textContent = volunteer.name; // Volunteer name
+
+                                // Make it draggable for reassignment
+                                li.draggable = true;
+                                li.addEventListener('dragstart', (event) => {
+                                    event.stopPropagation(); // Prevent athlete card drag interference
+                                    event.dataTransfer.setData('text/plain', volunteer.id); // volunteer being dragged
+                                    event.dataTransfer.setData('sourceAthleteId', athlete.id); // athlete they are coming from
+                                    event.dataTransfer.effectAllowed = 'move';
+                                    event.target.classList.add('dragging');
+                                    document.body.classList.add('unassign-drag-active'); // Add body class
+                                    // REMOVED: console.log('dragstart from athlete card - volunteerId:', volunteer.id, 'set sourceAthleteId:', athlete.id);
+                                });
+                                li.addEventListener('dragend', (event) => {
+                                    event.stopPropagation();
+                                    event.target.classList.remove('dragging');
+                                    document.body.classList.remove('unassign-drag-active'); // Remove body class
+                                });
+
+                                // Existing remove button logic
                                 const removeBtn = document.createElement('button');
                                 removeBtn.textContent = 'X';
                                 removeBtn.className = 'unassign-volunteer-btn';
                                 removeBtn.dataset.athleteId = athlete.id;
                                 removeBtn.dataset.volunteerId = volId;
                                 removeBtn.addEventListener('click', () => {
-                                    // console.log('Attempting to unassign:', athlete.id, volId);
                                     unassignVolunteerFromAthlete(athlete.id, volId);
                                 });
+
+                                // Add a spacer or style for button positioning if needed, then append button
+                                const spacer = document.createTextNode(' '); // Simple space
+                                li.appendChild(spacer);
                                 li.appendChild(removeBtn);
                                 assignedUl.appendChild(li);
                             }
@@ -214,6 +249,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const volunteer = appData.volunteers.find(v => v.id === volunteerId);
                 if (volunteer) {
                     const li = document.createElement('li');
+                    li.classList.add('volunteer-item-card'); // Add common class
                     li.dataset.id = volunteer.id;
                     li.textContent = volunteer.name;
                     li.draggable = true; // Make volunteer draggable
@@ -251,8 +287,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    function unassignVolunteerFromAthlete(athleteId, volunteerId) {
-        // console.log('Unassigning:', volunteerId, 'from athlete:', athleteId);
+    function unassignVolunteerFromAthlete(athleteId, volunteerId, shouldRender = true) {
+        // console.log('Unassigning:', volunteerId, 'from athlete:', athleteId, 'Render:', shouldRender);
         if (appData.assignments[athleteId]) {
             const index = appData.assignments[athleteId].indexOf(volunteerId);
             if (index > -1) {
@@ -264,11 +300,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         saveData();
-        renderAssignmentsSection(); // Re-render the UI
+        if (shouldRender) {
+            renderAssignmentsSection(); // Re-render the UI
+        }
     }
 
 
-    function assignVolunteerToAthlete(athleteId, volunteerId) {
+    function assignVolunteerToAthlete(athleteId, volunteerId, shouldRender = true) {
+        // console.log('Assigning:', volunteerId, 'to athlete:', athleteId, 'Render:', shouldRender);
         // Ensure assignments array exists for the athlete
         appData.assignments[athleteId] = appData.assignments[athleteId] || [];
 
@@ -284,7 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         saveData();
-        renderAssignmentsSection(); // Re-render the UI to reflect the new assignment
+        if (shouldRender) {
+            renderAssignmentsSection(); // Re-render the UI to reflect the new assignment
+        }
     }
 
 
@@ -494,37 +535,6 @@ function toggleAssignment(athleteId, volunteerId) {
         showSection(assignmentsSection); // Automatically move to assignments
     }
 
-
-    function toggleAssignment(athleteId, volunteerId) {
-        if (!athleteId) {
-            alert('Please select an athlete first.');
-            return;
-        }
-
-        appData.assignments[athleteId] = appData.assignments[athleteId] || [];
-        const currentAssignments = appData.assignments[athleteId];
-
-        const index = currentAssignments.indexOf(volunteerId);
-        if (index > -1) {
-            // Remove assignment
-            currentAssignments.splice(index, 1);
-        } else {
-            // Add assignment
-            currentAssignments.push(volunteerId);
-        }
-
-        // Update volunteer history for the athlete
-        appData.volunteerHistory[athleteId] = appData.volunteerHistory[athleteId] || [];
-        if (!appData.volunteerHistory[athleteId].includes(volunteerId)) {
-            appData.volunteerHistory[athleteId].push(volunteerId);
-        }
-
-        saveData();
-        // updateAssignmentsDisplay(athleteId); // This was part of the old logic
-        renderAssignmentsSection(); // Re-render the overall assignment section
-    }
-*/
-
     // --- Event Listeners ---
     showCheckinBtn.addEventListener('click', () => {
         showSection(checkinSection);
@@ -552,4 +562,37 @@ function toggleAssignment(athleteId, volunteerId) {
     loadData();
     renderCheckinLists(); // Start on the check-in screen
     showSection(checkinSection);
+
+    // --- Event Listeners for Drag-to-Unassign on Volunteers Column ---
+    if (volunteersColumn) { // Ensure the element exists
+        volunteersColumn.addEventListener('dragover', (event) => {
+            event.preventDefault(); // Allow dropping
+            if (event.dataTransfer.types.includes('sourceathleteid')) {
+                volunteersColumn.classList.add('drop-target-unassign');
+                event.dataTransfer.dropEffect = 'move';
+            } else {
+                volunteersColumn.classList.remove('drop-target-unassign');
+                event.dataTransfer.dropEffect = 'none';
+            }
+        });
+
+        volunteersColumn.addEventListener('dragleave', (event) => {
+            // Simpler dragleave, might flicker if dragging over child elements like H3 or UL padding
+            volunteersColumn.classList.remove('drop-target-unassign');
+        });
+
+        volunteersColumn.addEventListener('drop', (event) => {
+            event.preventDefault();
+            volunteersColumn.classList.remove('drop-target-unassign');
+            const volunteerId = event.dataTransfer.getData('text/plain');
+            const sourceAthleteId = event.dataTransfer.getData('sourceAthleteId');
+
+            if (sourceAthleteId && volunteerId) {
+                // Check if the drop target is the column itself or a child that isn't another valid drop zone.
+                // For unassignment, dropping anywhere on the column (that isn't another drop target) is fine.
+                // The event listeners on individual athlete cards will handle their own drops and stop propagation if needed.
+                unassignVolunteerFromAthlete(sourceAthleteId, volunteerId);
+            }
+        });
+    }
 });
