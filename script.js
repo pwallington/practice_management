@@ -10,6 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
         assignments: {}, // {athleteId: [volunteerId1, volunteerId2], ...}
         athleteNotes: {}, // {athleteId: "some notes", ...}
         volunteerHistory: {}, // {volunteerId: [athleteId1, athleteId2], ...}
+        athleteRoles: [],
+        volunteerRoles: [],
+        editingItemId: null,
+        editingItemType: null,
     };
 
     function loadData() {
@@ -20,6 +24,57 @@ document.addEventListener('DOMContentLoaded', () => {
             appData.assignments = appData.assignments || {};
             appData.athleteNotes = appData.athleteNotes || {};
             appData.volunteerHistory = appData.volunteerHistory || {};
+            appData.athleteRoles = appData.athleteRoles || [];
+            appData.volunteerRoles = appData.volunteerRoles || [];
+            appData.editingItemId = appData.editingItemId || null;
+            appData.editingItemType = appData.editingItemType || null;
+
+            appData.athletes.forEach(athlete => athlete.roles = athlete.roles || []);
+            appData.volunteers.forEach(volunteer => volunteer.roles = volunteer.roles || []);
+        }
+    }
+
+    function deleteAthleteRole(roleId) {
+        const roleToDelete = appData.athleteRoles.find(r => r.id === roleId);
+        if (!roleToDelete) return;
+
+        const athletesWithRole = appData.athletes.filter(a => a.roles.includes(roleId));
+        let confirmed = true;
+        if (athletesWithRole.length > 0) {
+            confirmed = confirm(`Athlete role "${roleToDelete.name}" is assigned to ${athletesWithRole.length} athlete(s). Deleting it will remove it from them. Continue?`);
+        }
+
+        if (confirmed) {
+            appData.athleteRoles = appData.athleteRoles.filter(r => r.id !== roleId);
+            appData.athletes.forEach(athlete => {
+                athlete.roles = athlete.roles.filter(r => r !== roleId);
+            });
+            saveData();
+            renderRoleSelectors();
+            renderManageRolesList();
+            renderRosters(); // Re-render rosters as roles might be displayed there
+        }
+    }
+
+    function deleteVolunteerRole(roleId) {
+        const roleToDelete = appData.volunteerRoles.find(r => r.id === roleId);
+        if (!roleToDelete) return;
+
+        const volunteersWithRole = appData.volunteers.filter(v => v.roles.includes(roleId));
+        let confirmed = true;
+        if (volunteersWithRole.length > 0) {
+            confirmed = confirm(`Volunteer role "${roleToDelete.name}" is assigned to ${volunteersWithRole.length} volunteer(s). Deleting it will remove it from them. Continue?`);
+        }
+
+        if (confirmed) {
+            appData.volunteerRoles = appData.volunteerRoles.filter(r => r.id !== roleId);
+            appData.volunteers.forEach(volunteer => {
+                volunteer.roles = volunteer.roles.filter(r => r !== roleId);
+            });
+            saveData();
+            renderRoleSelectors();
+            renderManageRolesList();
+            renderRosters(); // Re-render rosters
         }
     }
 
@@ -58,6 +113,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const addVolunteerBtn = document.getElementById('add-volunteer-btn');
     const athleteRosterList = document.getElementById('athlete-roster-list');
     const volunteerRosterList = document.getElementById('volunteer-roster-list');
+    const cancelAthleteEditBtn = document.getElementById('cancel-athlete-edit-btn');
+    const cancelVolunteerEditBtn = document.getElementById('cancel-volunteer-edit-btn');
+    const newAthleteRoleNameInput = document.getElementById('new-athlete-role-name');
+    const addAthleteRoleBtn = document.getElementById('add-athlete-role-btn');
+    const athleteRoleCheckboxesContainer = document.getElementById('athlete-role-checkboxes');
+    const newVolunteerRoleNameInput = document.getElementById('new-volunteer-role-name');
+    const addVolunteerRoleBtn = document.getElementById('add-volunteer-role-btn');
+    const volunteerRoleCheckboxesContainer = document.getElementById('volunteer-role-checkboxes');
+    const manageAthleteRolesList = document.getElementById('manage-athlete-roles-list');
+    const manageVolunteerRolesList = document.getElementById('manage-volunteer-roles-list');
 
     // --- Helper Functions ---
 
@@ -74,7 +139,80 @@ document.addEventListener('DOMContentLoaded', () => {
         section.classList.add('active');
     }
 
+    function clearAllHighlights() {
+        document.querySelectorAll('#athlete-roster-list li, #volunteer-roster-list li').forEach(item => {
+            item.classList.remove('editing-item');
+        });
+    }
+
+    function resetAthleteForm() {
+        newAthleteNameInput.value = '';
+        newAthleteNotesInput.value = '';
+        addAthleteBtn.textContent = 'Add Athlete';
+        cancelAthleteEditBtn.style.display = 'none';
+        appData.editingItemId = null;
+        appData.editingItemType = null;
+        document.querySelectorAll('#athlete-role-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        clearAllHighlights();
+    }
+
+    function resetVolunteerForm() {
+        newVolunteerNameInput.value = '';
+        addVolunteerBtn.textContent = 'Add Volunteer';
+        cancelVolunteerEditBtn.style.display = 'none';
+        // If editingItemId and Type point to volunteer, reset them.
+        if (appData.editingItemType === 'volunteer') {
+            appData.editingItemId = null;
+            appData.editingItemType = null;
+        }
+        document.querySelectorAll('#volunteer-role-checkboxes input[type="checkbox"]').forEach(cb => cb.checked = false);
+        clearAllHighlights();
+    }
+
     // --- Render Functions ---
+
+    function renderRoleSelectors() {
+        athleteRoleCheckboxesContainer.innerHTML = '';
+        appData.athleteRoles.forEach(role => {
+            const div = document.createElement('div');
+            // Ensure unique IDs for labels and inputs if roles can have same names (though IDs should be unique)
+            div.innerHTML = `<input type="checkbox" id="arole_${role.id}" name="athlete_role" value="${role.id}"> <label for="arole_${role.id}">${role.name}</label>`;
+            athleteRoleCheckboxesContainer.appendChild(div);
+        });
+
+        volunteerRoleCheckboxesContainer.innerHTML = '';
+        appData.volunteerRoles.forEach(role => {
+            const div = document.createElement('div');
+            div.innerHTML = `<input type="checkbox" id="vrole_${role.id}" name="volunteer_role" value="${role.id}"> <label for="vrole_${role.id}">${role.name}</label>`;
+            volunteerRoleCheckboxesContainer.appendChild(div);
+        });
+    }
+
+    function renderManageRolesList() {
+        manageAthleteRolesList.innerHTML = '';
+        appData.athleteRoles.forEach(role => {
+            const li = document.createElement('li');
+            li.textContent = role.name + ' ';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.classList.add('delete-role-btn');
+            deleteBtn.addEventListener('click', () => deleteAthleteRole(role.id));
+            li.appendChild(deleteBtn);
+            manageAthleteRolesList.appendChild(li);
+        });
+
+        manageVolunteerRolesList.innerHTML = '';
+        appData.volunteerRoles.forEach(role => {
+            const li = document.createElement('li');
+            li.textContent = role.name + ' ';
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.classList.add('delete-role-btn');
+            deleteBtn.addEventListener('click', () => deleteVolunteerRole(role.id));
+            li.appendChild(deleteBtn);
+            manageVolunteerRolesList.appendChild(li);
+        });
+    }
 
     function renderCheckinLists() {
         athleteCheckinList.innerHTML = '';
@@ -446,13 +584,66 @@ function toggleAssignment(athleteId, volunteerId) {
 
         appData.athletes.forEach(athlete => {
             const li = document.createElement('li');
-            li.textContent = athlete.name;
+            let athleteDisplayText = athlete.name;
+            const athleteRoleNames = athlete.roles.map(roleId => {
+                const role = appData.athleteRoles.find(r => r.id === roleId);
+                return role ? role.name : '';
+            }).filter(name => name).join(', ');
+            if (athleteRoleNames) {
+                athleteDisplayText += ` (Roles: ${athleteRoleNames})`;
+            }
+            li.textContent = athleteDisplayText;
+            li.dataset.id = athlete.id; // Ensure ID is set for editing
+            li.addEventListener('click', () => {
+                clearAllHighlights();
+                li.classList.add('editing-item');
+                resetVolunteerForm(); // Reset other form
+                appData.editingItemId = athlete.id;
+                appData.editingItemType = 'athlete';
+                newAthleteNameInput.value = athlete.name;
+                newAthleteNotesInput.value = appData.athleteNotes[athlete.id] || '';
+                addAthleteBtn.textContent = 'Update Athlete';
+                cancelAthleteEditBtn.style.display = 'inline-block';
+                renderRoleSelectors(); // Render checkboxes first
+                appData.athleteRoles.forEach(role => {
+                    const checkbox = document.getElementById(`arole_${role.id}`);
+                    if (checkbox) {
+                        checkbox.checked = athlete.roles.includes(role.id);
+                    }
+                });
+            });
             athleteRosterList.appendChild(li);
         });
 
         appData.volunteers.forEach(volunteer => {
             const li = document.createElement('li');
-            li.textContent = volunteer.name;
+            let volunteerDisplayText = volunteer.name;
+            const volunteerRoleNames = volunteer.roles.map(roleId => {
+                const role = appData.volunteerRoles.find(r => r.id === roleId);
+                return role ? role.name : '';
+            }).filter(name => name).join(', ');
+            if (volunteerRoleNames) {
+                volunteerDisplayText += ` (Roles: ${volunteerRoleNames})`;
+            }
+            li.textContent = volunteerDisplayText;
+            li.dataset.id = volunteer.id; // Ensure ID is set for editing
+            li.addEventListener('click', () => {
+                clearAllHighlights();
+                li.classList.add('editing-item');
+                resetAthleteForm(); // Reset other form
+                appData.editingItemId = volunteer.id;
+                appData.editingItemType = 'volunteer';
+                newVolunteerNameInput.value = volunteer.name;
+                addVolunteerBtn.textContent = 'Update Volunteer';
+                cancelVolunteerEditBtn.style.display = 'inline-block';
+                renderRoleSelectors(); // Render checkboxes first
+                appData.volunteerRoles.forEach(role => {
+                    const checkbox = document.getElementById(`vrole_${role.id}`);
+                    if (checkbox) {
+                        checkbox.checked = volunteer.roles.includes(role.id);
+                    }
+                });
+            });
             volunteerRosterList.appendChild(li);
         });
     }
@@ -477,37 +668,119 @@ function toggleAssignment(athleteId, volunteerId) {
         renderCheckinLists(); // Re-render to update UI
     }
 
+    function addAthleteRole() {
+        const roleName = newAthleteRoleNameInput.value.trim();
+        if (roleName && !appData.athleteRoles.find(r => r.name === roleName)) {
+            const newRole = { id: generateId(), name: roleName };
+            appData.athleteRoles.push(newRole);
+            saveData();
+            renderRoleSelectors();
+            renderManageRolesList();
+            newAthleteRoleNameInput.value = '';
+        } else if (!roleName) {
+            alert('Role name cannot be empty.');
+        } else {
+            alert('Athlete role already exists.');
+        }
+    }
+
+    function addVolunteerRole() {
+        const roleName = newVolunteerRoleNameInput.value.trim();
+        if (roleName && !appData.volunteerRoles.find(r => r.name === roleName)) {
+            const newRole = { id: generateId(), name: roleName };
+            appData.volunteerRoles.push(newRole);
+            saveData();
+            renderRoleSelectors();
+            renderManageRolesList();
+            newVolunteerRoleNameInput.value = '';
+        } else if (!roleName) {
+            alert('Role name cannot be empty.');
+        } else {
+            alert('Volunteer role already exists.');
+        }
+    }
+
     function addAthlete() {
         const name = newAthleteNameInput.value.trim();
         const notes = newAthleteNotesInput.value.trim();
-        if (name) {
-            const newAthlete = { id: generateId(), name: name };
-            appData.athletes.push(newAthlete);
-            appData.athleteNotes[newAthlete.id] = notes; // Store notes with athlete ID
-            saveData();
-            newAthleteNameInput.value = '';
-            newAthleteNotesInput.value = '';
-            renderRosters();
-            renderCheckinLists(); // Update check-in list as well
-            alert(`${name} added to athletes!`);
-        } else {
+
+        if (!name) {
             alert('Athlete name cannot be empty.');
+            return;
         }
+
+        if (appData.editingItemId && appData.editingItemType === 'athlete') {
+            // Edit mode
+            const athlete = appData.athletes.find(a => a.id === appData.editingItemId);
+            if (athlete) {
+                athlete.name = name;
+                appData.athleteNotes[appData.editingItemId] = notes;
+                const selectedRoleIds = [];
+                document.querySelectorAll('#athlete-role-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                    selectedRoleIds.push(checkbox.value);
+                });
+                athlete.roles = selectedRoleIds;
+                saveData();
+                renderRosters();
+                resetAthleteForm();
+                alert(`${name} updated!`);
+            }
+            return;
+        }
+
+        // Add new athlete mode
+        const selectedRoleIds = [];
+        document.querySelectorAll('#athlete-role-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedRoleIds.push(checkbox.value);
+        });
+        const newAthlete = { id: generateId(), name: name, roles: selectedRoleIds };
+        appData.athletes.push(newAthlete);
+        appData.athleteNotes[newAthlete.id] = notes; // Store notes with athlete ID
+        saveData();
+        resetAthleteForm(); // Clears inputs and resets button text etc.
+        renderRosters();
+        renderCheckinLists(); // Update check-in list as well
+        alert(`${name} added to athletes!`);
     }
 
     function addVolunteer() {
         const name = newVolunteerNameInput.value.trim();
-        if (name) {
-            const newVolunteer = { id: generateId(), name: name };
-            appData.volunteers.push(newVolunteer);
-            saveData();
-            newVolunteerNameInput.value = '';
-            renderRosters();
-            renderCheckinLists(); // Update check-in list as well
-            alert(`${name} added to volunteers!`);
-        } else {
+
+        if (!name) {
             alert('Volunteer/Coach name cannot be empty.');
+            return;
         }
+
+        if (appData.editingItemId && appData.editingItemType === 'volunteer') {
+            // Edit mode
+            const volunteer = appData.volunteers.find(v => v.id === appData.editingItemId);
+            if (volunteer) {
+                volunteer.name = name;
+                const selectedRoleIds = [];
+                document.querySelectorAll('#volunteer-role-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+                    selectedRoleIds.push(checkbox.value);
+                });
+                volunteer.roles = selectedRoleIds;
+                saveData();
+                renderRosters();
+                resetVolunteerForm();
+                alert(`${name} updated!`);
+            }
+            return;
+        }
+
+        // Add new volunteer mode
+        const selectedRoleIds = [];
+        document.querySelectorAll('#volunteer-role-checkboxes input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedRoleIds.push(checkbox.value);
+        });
+        const newVolunteer = { id: generateId(), name: name, roles: selectedRoleIds };
+        appData.volunteers.push(newVolunteer);
+        saveData();
+        resetVolunteerForm(); // Clears input and resets button text etc.
+        renderRosters();
+        renderCheckinLists(); // Update check-in list as well
+        alert(`${name} added to volunteers!`);
     }
 
     function finalizeCheckin() {
@@ -547,10 +820,34 @@ function toggleAssignment(athleteId, volunteerId) {
     showManagementBtn.addEventListener('click', () => {
         showSection(managementSection);
         renderRosters();
+        renderRoleSelectors(); // Ensure roles are displayed
+        renderManageRolesList(); // Ensure role management list is displayed
+        resetAthleteForm(); // Ensure form is reset when navigating to this section
+        resetVolunteerForm(); // Ensure form is reset
     });
 
     addAthleteBtn.addEventListener('click', addAthlete);
     addVolunteerBtn.addEventListener('click', addVolunteer);
+
+    cancelAthleteEditBtn.addEventListener('click', resetAthleteForm);
+    cancelVolunteerEditBtn.addEventListener('click', resetVolunteerForm);
+
+    addAthleteRoleBtn.addEventListener('click', addAthleteRole);
+    addVolunteerRoleBtn.addEventListener('click', addVolunteerRole);
+
+    newAthleteNameInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent default form submission, if any
+            addAthleteBtn.click();
+        }
+    });
+
+    newVolunteerNameInput.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault(); // Prevent default form submission, if any
+            addVolunteerBtn.click();
+        }
+    });
 
     finalizeCheckinBtn.addEventListener('click', finalizeCheckin);
 
@@ -561,6 +858,8 @@ function toggleAssignment(athleteId, volunteerId) {
     // --- Initial Load ---
     loadData();
     renderCheckinLists(); // Start on the check-in screen
+    renderRoleSelectors(); // Render role selectors on initial load
+    renderManageRolesList(); // Render role management list on initial load
     showSection(checkinSection);
 
     // --- Event Listeners for Drag-to-Unassign on Volunteers Column ---
