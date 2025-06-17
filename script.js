@@ -1,8 +1,32 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Data Storage & Retrieval ---
-    const storageKey = 'sportsPracticeData';
+    // Firebase Auth Instance
+    const auth = firebase.auth();
+    const db = firebase.firestore(); // Initialize Firestore
 
-    let appData = {
+    // Global currentUser variable
+    let currentUserId = null;
+
+    // --- DOM Elements ---
+    // Auth elements
+    const authSection = document.getElementById('auth-section');
+    const loginEmailInput = document.getElementById('login-email');
+    const loginPasswordInput = document.getElementById('login-password');
+    const loginBtn = document.getElementById('login-btn');
+    const signupEmailInput = document.getElementById('signup-email');
+    const signupPasswordInput = document.getElementById('signup-password');
+    const signupBtn = document.getElementById('signup-btn');
+    const googleSignInBtn = document.getElementById('google-signin-btn');
+    const authError = document.getElementById('auth-error');
+    const logoutBtn = document.getElementById('logout-btn');
+
+    // Main app elements
+    const appHeader = document.querySelector('header');
+    const appMain = document.querySelector('main');
+
+    // --- Data Storage & Retrieval ---
+    // const storageKey = 'sportsPracticeData'; // Removed, no longer needed
+
+    let appData = { // This will be loaded from/saved to Firestore per user
         athletes: [],
         volunteers: [],
         checkedInAthletes: [],
@@ -16,22 +40,57 @@ document.addEventListener('DOMContentLoaded', () => {
         editingItemType: null,
     };
 
-    function loadData() {
-        const storedData = localStorage.getItem(storageKey);
-        if (storedData) {
-            appData = JSON.parse(storedData);
-            // Ensure new properties are initialized if loading older data
-            appData.assignments = appData.assignments || {};
-            appData.athleteNotes = appData.athleteNotes || {};
-            appData.volunteerHistory = appData.volunteerHistory || {};
-            appData.athleteRoles = appData.athleteRoles || [];
-            appData.volunteerRoles = appData.volunteerRoles || [];
-            appData.editingItemId = appData.editingItemId || null;
-            appData.editingItemType = appData.editingItemType || null;
+    function loadData(userId) {
+        db.collection('rosters').doc(userId).get()
+            .then((doc) => {
+                if (doc.exists) {
+                    appData = doc.data();
+                    // Ensure new properties are initialized if loading older data structure
+                    appData.assignments = appData.assignments || {};
+                    appData.athleteNotes = appData.athleteNotes || {};
+                    appData.volunteerHistory = appData.volunteerHistory || {};
+                    appData.athleteRoles = appData.athleteRoles || [];
+                    appData.volunteerRoles = appData.volunteerRoles || [];
+                    appData.editingItemId = appData.editingItemId || null;
+                    appData.editingItemType = appData.editingItemType || null;
+                    appData.athletes = appData.athletes || [];
+                    appData.volunteers = appData.volunteers || [];
+                    appData.checkedInAthletes = appData.checkedInAthletes || [];
+                    appData.checkedInVolunteers = appData.checkedInVolunteers || [];
 
-            appData.athletes.forEach(athlete => athlete.roles = athlete.roles || []);
-            appData.volunteers.forEach(volunteer => volunteer.roles = volunteer.roles || []);
-        }
+                    appData.athletes.forEach(athlete => athlete.roles = athlete.roles || []);
+                    appData.volunteers.forEach(volunteer => volunteer.roles = volunteer.roles || []);
+                    console.log('Data loaded from Firestore');
+                } else {
+                    // No document for this user, initialize with empty/default appData
+                    console.log('No data in Firestore for this user, initializing with default appData.');
+                    appData = {
+                        athletes: [], volunteers: [], checkedInAthletes: [], checkedInVolunteers: [],
+                        assignments: {}, athleteNotes: {}, volunteerHistory: {},
+                        athleteRoles: [], volunteerRoles: [], editingItemId: null, editingItemType: null,
+                    };
+                }
+                // After data is loaded or initialized, render the UI
+                renderCheckinLists();
+                renderRosters();
+                renderRoleSelectors();
+                renderManageRolesList();
+                renderAssignmentsSection(); // Ensure this is also called
+            })
+            .catch((error) => {
+                console.error('Error loading data from Firestore: ', error);
+                // Initialize with empty appData and render UI to allow app to function
+                 appData = {
+                    athletes: [], volunteers: [], checkedInAthletes: [], checkedInVolunteers: [],
+                    assignments: {}, athleteNotes: {}, volunteerHistory: {},
+                    athleteRoles: [], volunteerRoles: [], editingItemId: null, editingItemType: null,
+                };
+                renderCheckinLists();
+                renderRosters();
+                renderRoleSelectors();
+                renderManageRolesList();
+                renderAssignmentsSection();
+            });
     }
 
     function deleteAthleteRole(roleId) {
@@ -79,10 +138,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function saveData() {
-        localStorage.setItem(storageKey, JSON.stringify(appData));
+        const user = firebase.auth().currentUser;
+        if (user) {
+            db.collection('rosters').doc(user.uid).set(appData)
+                .then(() => {
+                    console.log('Data saved to Firestore');
+                })
+                .catch((error) => {
+                    console.error('Error saving data to Firestore: ', error);
+                    // Consider how to inform the user, maybe an alert or a status message
+                });
+        } else {
+            console.log('No user logged in, skipping save to Firestore.');
+        }
     }
 
-    // --- DOM Elements ---
+    // --- DOM Elements (existing app sections) ---
     const checkinSection = document.getElementById('checkin-section');
     const assignmentsSection = document.getElementById('assignments-section');
     const managementSection = document.getElementById('management-section');
@@ -855,12 +926,130 @@ function toggleAssignment(athleteId, volunteerId) {
     //     updateAssignmentsDisplay(event.target.value);
     // });
 
+    // --- Authentication Logic Functions ---
+    function handleSignUp() {
+        const email = signupEmailInput.value;
+        const password = signupPasswordInput.value;
+        auth.createUserWithEmailAndPassword(email, password)
+            .then(userCredential => {
+                // Signed in
+                console.log('Signed up:', userCredential.user);
+                signupEmailInput.value = '';
+                signupPasswordInput.value = '';
+                authError.textContent = '';
+                // User will be handled by onAuthStateChanged
+            })
+            .catch(error => {
+                authError.textContent = error.message;
+                console.error('Sign up error:', error);
+            });
+    }
+
+    function handleLogin() {
+        const email = loginEmailInput.value;
+        const password = loginPasswordInput.value;
+        auth.signInWithEmailAndPassword(email, password)
+            .then(userCredential => {
+                // Signed in
+                console.log('Logged in:', userCredential.user);
+                loginEmailInput.value = '';
+                loginPasswordInput.value = '';
+                authError.textContent = '';
+                // User will be handled by onAuthStateChanged
+            })
+            .catch(error => {
+                authError.textContent = error.message;
+                console.error('Login error:', error);
+            });
+    }
+
+    function handleGoogleSignIn() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider)
+            .then(result => {
+                console.log('Google Sign-In success:', result.user);
+                authError.textContent = '';
+                // User will be handled by onAuthStateChanged
+            })
+            .catch(error => {
+                authError.textContent = error.message;
+                console.error('Google Sign-In error:', error);
+            });
+    }
+
+    function handleLogout() {
+        auth.signOut()
+            .then(() => {
+                console.log('User signed out.');
+                // UI changes will be handled by onAuthStateChanged
+            })
+            .catch(error => {
+                authError.textContent = error.message;
+                console.error('Logout error:', error);
+            });
+    }
+
+    // --- Event Listeners for Auth Buttons ---
+    signupBtn.addEventListener('click', handleSignUp);
+    loginBtn.addEventListener('click', handleLogin);
+    googleSignInBtn.addEventListener('click', handleGoogleSignIn);
+    logoutBtn.addEventListener('click', handleLogout);
+
+    // --- Auth State Listener ---
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            // User is signed in
+            console.log('Auth state changed: User logged in', user.uid);
+            authSection.classList.remove('active');
+            authSection.style.display = 'none';
+            appHeader.style.display = ''; // Or 'block', 'flex' depending on original display type
+            appMain.style.display = '';   // Or 'block'
+            logoutBtn.style.display = 'inline-block'; // Or 'block'
+            authError.textContent = '';
+
+            currentUserId = user.uid; // Set currentUserId
+            loadData(user.uid); // Load data from Firestore
+
+            // UI rendering is now handled within loadData's .then() block
+            showSection(checkinSection); // Show default section after login
+
+        } else {
+            // User is signed out
+            console.log('Auth state changed: User logged out');
+            currentUserId = null; // Clear currentUserId
+            authSection.classList.add('active');
+            authSection.style.display = ''; // Or 'block'
+            appHeader.style.display = 'none';
+            appMain.style.display = 'none';
+            logoutBtn.style.display = 'none';
+
+            // Placeholder for clearing user data
+            // clearUserData();
+
+            // For now, reset appData to initial empty state and re-render
+            appData = {
+                athletes: [], volunteers: [], checkedInAthletes: [], checkedInVolunteers: [],
+                assignments: {}, athleteNotes: {}, volunteerHistory: {},
+                athleteRoles: [], volunteerRoles: [], editingItemId: null, editingItemType: null,
+            };
+            // Re-render all relevant parts of the UI to reflect the cleared data
+            renderCheckinLists();
+            renderAssignmentsSection();
+            renderRosters();
+            renderRoleSelectors();
+            renderManageRolesList();
+            resetAthleteForm();
+            resetVolunteerForm();
+            // No need to call showSection for authSection, its class 'active' and display style handle it.
+        }
+    });
+
     // --- Initial Load ---
-    loadData();
-    renderCheckinLists(); // Start on the check-in screen
-    renderRoleSelectors(); // Render role selectors on initial load
-    renderManageRolesList(); // Render role management list on initial load
-    showSection(checkinSection);
+    // loadData(); // Removed: Data loading is now triggered by auth state.
+    // renderCheckinLists(); // Removed
+    // renderRoleSelectors(); // Removed
+    // renderManageRolesList(); // Removed
+    // showSection(checkinSection); // Removed: Auth listener handles initial UI
 
     // --- Event Listeners for Drag-to-Unassign on Volunteers Column ---
     if (volunteersColumn) { // Ensure the element exists

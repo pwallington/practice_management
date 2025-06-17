@@ -4,19 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sports Practice Manager</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script>
+      // Your web app's Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyBuqlKCp5eQVaz0HWgWB2_iWm1YRfigRb8",
+        authDomain: "practice-management-78feb.firebaseapp.com",
+        projectId: "practice-management-78feb",
+        storageBucket: "practice-management-78feb.firebasestorage.app",
+        messagingSenderId: "186876185860",
+        appId: "1:186876185860:web:2182643f8acec819691451",
+        measurementId: "G-JZDK9X3PRP"
+      };
+
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header>
+    <div id="auth-section" class="app-section active">
+        <h2>Login or Sign Up</h2>
+        <div id="login-form">
+            <h3>Login</h3>
+            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <button id="login-btn">Login</button>
+        </div>
+        <hr>
+        <div id="signup-form">
+            <h3>Sign Up</h3>
+            <input type="email" id="signup-email" placeholder="Email" required>
+            <input type="password" id="signup-password" placeholder="Password" required>
+            <button id="signup-btn">Sign Up</button>
+        </div>
+        <hr>
+        <div id="google-signin-div">
+             <button id="google-signin-btn">Sign in with Google</button>
+        </div>
+        <p id="auth-error" style="color: red;"></p>
+    </div>
+    <header style="display: none;">
         <h1>Sports Practice Manager</h1>
         <nav>
             <button id="show-checkin">Check-in</button>
             <button id="show-assignments">Assignments</button>
             <button id="show-management">Manage Rosters</button>
+            <button id="logout-btn" style="display: none;">Logout</button>
         </nav>
     </header>
 
-    <main>
+    <main style="display: none;">
         <section id="checkin-section" class="app-section active">
             <h2>Check-in for Practice</h2>
             <div class="checkin-lists">
